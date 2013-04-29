@@ -170,6 +170,13 @@ local GHOST_LANGUAGES = {
     "tcl", "vb", "vbnet", "visualfoxpro", "xml"
 }
 
+local HPASTE_LANGUAGES = {
+    "haskell", "agda", "ocaml", "lisp", "lisp", "erlang", "literatehaskell",
+    "scala", "go", "python", "ruby", "idris", "prolog", "scheme", "asm", "bash",
+    "c", "cs", "cpp", "diff", "java", "javascript", "lua", "objectivec",
+    "perl", "smalltalk", "sql", "tex", ["Plain"] = "haskell", 
+}
+
 local LODGEIT_LANGUAGES = {
     "apache", "bash", "bat", "boo", "c", "csharp", "cpp", "clojure", "creole", "css", "csv",
     "d", "control", "html+django", "dylan", "erlang", "rhtml", "gas", "gcc-messages",
@@ -269,6 +276,21 @@ local function GHOST_ARGS(tbl, file)
     return args
 end
 
+local function HPASTE_ARGS(tbl, file)
+    local basename = string.match(tbl.files[1] or "stdin", "([^/]+)[.][^.]+$")
+    local lang = tbl.services[tbl.service].languages[tbl.language] or tbl.language
+    local args = {
+        "'paste@%s'" % file,
+        "'title=%s'" % basename,
+        "'author=%s'" % tbl.nick,
+        "'language=%s'" % lang,
+        "'channel='",
+        "'email='",
+        "'submit=Submit'",
+    }
+    return args
+end
+
 local function LODGEIT_ARGS(tbl, file)
     local lang = tbl.services[tbl.service].languages[tbl.language] or tbl.language
     local private = tbl.private
@@ -343,6 +365,16 @@ local function GHOST_MATCHER(response)
     end
 end
 
+local function HPASTE_MATCHER(response)
+    local url = response:match('Location: (.*)')
+    if url then
+        return "http://hpaste.org/" .. url:match("%d+")
+    else
+        print("Error retrieving url.")
+--        return
+    end
+end
+
 local function LODGEIT_MATCHER(response)
     local url = response:match('Location: (.*)')
     if url then
@@ -358,6 +390,7 @@ addService(LP, "ca", "http://pastebin.ca/quiet-paste.php?api=moFXXusXQpQ3zlOyYgs
 addService(LP, "dpaste", "http://dpaste.com", DPASTE_LANGUAGES, DPASTE_ARGS, DPASTE_MATCHER)
 addService(LP, "fpaste", "http://fpaste.org/", FPASTE_LANGUAGES, FPASTE_ARGS, FPASTE_MATCHER, FPASTE_EXPIRES)
 addService(LP, "ghost", "http://pasteit.ghost1227.com/pastebin.php", GHOST_LANGUAGES, GHOST_ARGS, GHOST_MATCHER, GHOST_EXPIRES)
+addService(LP, "hpaste", "http://hpaste.org/new", HPASTE_LANGUAGES, HPASTE_ARGS, HPASTE_MATCHER)
 addService(LP, "lodgeit", "http://paste.pocoo.org/", LODGEIT_LANGUAGES, LODGEIT_ARGS, LODGEIT_MATCHER)
 
 local function addOption(tbl, required_opt, option_name, func_name, secondary_name)
